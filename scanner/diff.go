@@ -1,59 +1,56 @@
 package scanner
 
-import "fmt"
-
-// ChangeType describes what changed for a port.
-type ChangeType string
-
-const (
-	ChangeOpened ChangeType = "opened"
-	ChangeClosed ChangeType = "closed"
-)
-
-// PortChange represents a detected change between two scans.
-type PortChange struct {
-	Port     int
-	Protocol string
-	Change   ChangeType
-	Service  string
+// DiffResult holds ports that appeared or disappeared between two scans.
+type DiffResult struct {
+	Opened []Result
+	Closed []Result
 }
 
-func (c PortChange) String() string {
-	svc := c.Service
-	if svc == "" {
-		svc = "unknown"
-	}
-	return fmt.Sprintf("port %d/%s (%s) %s", c.Port, c.Protocol, svc, c.Change)
-}
-
-// Diff compares two ScanResults and returns the list of changes.
-func Diff(previous, current *ScanResult) []PortChange {
-	prevMap := make(map[int]PortState, len(previous.Ports))
-	for _, p := range previous.Ports {
-		prevMap[p.Port] = p
+// Diff compares a previous scan result set against a current one.
+// It returns ports that were opened (present in current, absent in previous)
+// and ports that were closed (present in previous, absent in current).
+func Diff(previous, current []Result) DiffResult {
+	prevMap := make(map[string]Result, len(previous))
+	for _, r := range previous {
+		prevMap[key(r)] = r
 	}
 
-	currMap := make(map[int]PortState, len(current.Ports))
-	for _, p := range current.Ports {
-		currMap[p.Port] = p
+	currMap := make(map[string]Result, len(current))
+	for _, r := range current {
+		currMap[key(r)] = r
 	}
 
-	var changes []PortChange
+	var diff DiffResult
 
-	for port, curr := range currMap {
-		prev, existed := prevMap[port]
-		if curr.Open && (!existed || !prev.Open) {
-			changes = append(changes, PortChange{
-				Port: port, Protocol: curr.Protocol,
-				Change: ChangeOpened, Service: curr.Service,
-			})
-		} else if !curr.Open && existed && prev.Open {
-			changes = append(changes, PortChange{
-				Port: port, Protocol: prev.Protocol,
-				Change: ChangeClosed, Service: prev.Service,
-			})
+	for k, r := range currMap {
+		if _, found := prevMap[k]; !found {
+			diff.Opened = append(diff.Opened, r)
 		}
 	}
 
-	return changes
+	for k, r := range prevMap {
+		if _, found := currMap[k]; !found {
+			diff.Closed = append(diff.Closed, r)
+		}
+	}
+
+	return diff
+}
+
+func key(r Result) string {
+	return r.Host + ":" + itoa(r.Port)
+}
+
+func itoa(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	buf := [20]byte{}
+	pos := len(buf)
+	for n > 0 {
+		pos--
+		buf[pos] = byte('0' + n%10)
+		n /= 10
+	}
+	return string(buf[pos:])
 }
