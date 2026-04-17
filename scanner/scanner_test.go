@@ -87,3 +87,20 @@ func TestScanMultiplePorts(t *testing.T) {
 		t.Errorf("expected exactly 1 open port, got %d", openCount)
 	}
 }
+
+func TestScanPortNumberPreserved(t *testing.T) {
+	port, cleanup := startTestServer(t)
+	defer cleanup()
+
+	s := scanner.New(time.Second)
+	result, err := s.Scan("127.0.0.1", []int{port})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Ports) != 1 {
+		t.Fatalf("expected 1 port result, got %d", len(result.Ports))
+	}
+	if result.Ports[0].Port != port {
+		t.Errorf("expected port number %d, got %d", port, result.Ports[0].Port)
+	}
+}
