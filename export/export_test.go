@@ -70,6 +70,18 @@ func TestCSVRowCount(t *testing.T) {
 	}
 }
 
+func TestCSVContainsScannedAt(t *testing.T) {
+	var buf bytes.Buffer
+	e := export.New(&buf, export.FormatCSV)
+	if err := e.Write(makeResults()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Verify the epoch timestamp appears in the CSV output.
+	if !strings.Contains(buf.String(), "2024-01-15") {
+		t.Error("expected scanned_at date '2024-01-15' in CSV output")
+	}
+}
+
 func TestUnknownFormatReturnsError(t *testing.T) {
 	var buf bytes.Buffer
 	e := export.New(&buf, export.Format("xml"))
