@@ -41,3 +41,12 @@ Each element in the JSON array contains:
   "scanned_at": "2024-01-15T12:00:00Z"
 }
 ```
+
+## CSV schema
+
+The CSV output includes a header row followed by one row per result:
+
+```
+host,port,protocol,state,scanned_at
+localhost,443,tcp,open,2024-01-15T12:00:00Z
+```
