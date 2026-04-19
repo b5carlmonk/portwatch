@@ -62,6 +62,13 @@ func TestSaveAndLoad(t *testing.T) {
 	if len(loaded.Entries) != 2 {
 		t.Fatalf("expected 2 entries, got %d", len(loaded.Entries))
 	}
+	// Verify results are preserved across save/load.
+	if len(loaded.Entries[0].Results) != 2 {
+		t.Fatalf("expected 2 results in first entry, got %d", len(loaded.Entries[0].Results))
+	}
+	if len(loaded.Entries[1].Results) != 1 {
+		t.Fatalf("expected 1 result in second entry, got %d", len(loaded.Entries[1].Results))
+	}
 }
 
 func TestLoadMissingFile(t *testing.T) {
