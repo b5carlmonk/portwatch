@@ -76,3 +76,29 @@ func TestEnrichUDPPort(t *testing.T) {
 		t.Errorf("expected DNS, got %s", enriched[0].Service)
 	}
 }
+
+// TestEnrichPreservesOriginalFields verifies that Enrich does not mutate fields
+// other than Service on the returned results.
+func TestEnrichPreservesOriginalFields(t *testing.T) {
+	c := classify.New(nil)
+	input := []scanner.Result{
+		{Host: "10.0.0.1", Port: 22, Proto: "tcp", Open: true},
+	}
+	enriched := c.Enrich(input)
+	if len(enriched) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(enriched))
+	}
+	r := enriched[0]
+	if r.Host != "10.0.0.1" {
+		t.Errorf("Host changed: got %q", r.Host)
+	}
+	if r.Port != 22 {
+		t.Errorf("Port changed: got %d", r.Port)
+	}
+	if r.Proto != "tcp" {
+		t.Errorf("Proto changed: got %q", r.Proto)
+	}
+	if !r.Open {
+		t.Errorf("Open changed: got false")
+	}
+}
