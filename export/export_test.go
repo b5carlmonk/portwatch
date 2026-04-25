@@ -89,3 +89,34 @@ func TestUnknownFormatReturnsError(t *testing.T) {
 		t.Error("expected error for unknown format")
 	}
 }
+
+func TestWriteEmptyResults(t *testing.T) {
+	// Verify that writing an empty result slice does not produce an error
+	// and outputs a valid, empty structure for both supported formats.
+	t.Run("JSON", func(t *testing.T) {
+		var buf bytes.Buffer
+		e := export.New(&buf, export.FormatJSON)
+		if err := e.Write([]scanner.Result{}); err != nil {
+			t.Fatalf("unexpected error for empty JSON: %v", err)
+		}
+		var records []map[string]interface{}
+		if err := json.Unmarshal(buf.Bytes(), &records); err != nil {
+			t.Fatalf("invalid JSON for empty results: %v", err)
+		}
+		if len(records) != 0 {
+			t.Errorf("expected 0 records, got %d", len(records))
+		}
+	})
+	t.Run("CSV", func(t *testing.T) {
+		var buf bytes.Buffer
+		e := export.New(&buf, export.FormatCSV)
+		if err := e.Write([]scanner.Result{}); err != nil {
+			t.Fatalf("unexpected error for empty CSV: %v", err)
+		}
+		lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+		// Only the header row should be present.
+		if len(lines) != 1 {
+			t.Errorf("expected 1 line (header only), got %d", len(lines))
+		}
+	})
+}
