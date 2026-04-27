@@ -81,6 +81,20 @@ func TestLoadMissingFile(t *testing.T) {
 	}
 }
 
+func TestLoadCorruptFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "corrupt.json")
+
+	if err := os.WriteFile(path, []byte("not valid json{"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	_, err := history.Load(path, 10)
+	if err == nil {
+		t.Fatal("expected error loading corrupt JSON, got nil")
+	}
+}
+
 func TestTimestampSet(t *testing.T) {
 	h := history.New(10)
 	h.Add(makeResults(80))
